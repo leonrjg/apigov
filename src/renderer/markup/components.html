@@ -1,0 +1,38 @@
+<div id="endpoints-content" class="bg-base-100 p-8 w-full">
+    <div class="flex justify-end mb-6">
+        <button hx-get="form.html" hx-target="#main-content" hx-swap="innerHTML" class="btn btn-success">+ Component</button>
+    </div>
+    <div id="missing-mappings-container" class="mb-6"></div>
+    <div id="endpoints-list" class="w-full overflow-x-auto rounded-box bg-base-100"></div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // Get dependencies from module system
+        const FieldDependency = window.requireModule('DependencyValidationService');
+        const MappingService = window.requireModule('MappingService');
+        const Mappings = window.requireModule('Mappings');
+        const Sidebar = window.requireModule('Sidebar');
+
+        // Initialize services
+        const dependencyValidationService = new FieldDependency();
+        const mappingService = new MappingService();
+        const missingMappings = new Mappings(dependencyValidationService, mappingService);
+        missingMappings.render('missing-mappings-container');
+
+        // Render components using the new system
+        if (typeof renderComponents === 'function') {
+            renderComponents();
+        }
+
+        // Process dynamic content
+        const endpointsContent = document.getElementById('endpoints-content');
+        if (Sidebar && Sidebar.processDynamicContent) {
+            Sidebar.processDynamicContent(endpointsContent);
+        } else if (typeof window.processDynamicContent === 'function') {
+            window.processDynamicContent(endpointsContent);
+        }
+    })();
+</script>

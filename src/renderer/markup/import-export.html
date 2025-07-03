@@ -1,0 +1,104 @@
+<div id="import-export-content" class="p-4 w-full flex flex-col">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold text-base-content">Import/Export</h1>
+    <button hx-get="components.html" hx-target="#main-content" hx-swap="innerHTML" class="btn btn-secondary">
+      <i data-lucide="arrow-left" class="h-4 w-4 mr-1"></i>
+      Back
+    </button>
+  </div>
+  <div class="p-4 bg-base-200 rounded-box shadow-md mb-4">
+    <div class="mb-4">
+      <h3 class="text-lg font-semibold mb-2">Database Contents</h3>
+      <div id="jsoneditor-import" style="height: 500px; overflow: auto;" title="Database JSON"></div>
+    </div>
+    <button id="save-btn" class="btn btn-primary w-full">
+      <i data-lucide="save" class="h-4 w-4 mr-2"></i>
+      Save
+    </button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('htmx:afterSettle', async (event) => {
+  // Only initialize if this is the import-export content being loaded
+  if (!event.detail.target.querySelector('#import-export-content')) return;
+
+  const EditorClass = window.requireModule('JsonEditorUtils');
+  let editor = Editor.initializeEditor('jsoneditor-import');
+
+  // Load database contents into editor
+  const loadDatabaseContents = async () => {
+    try {
+      const components = await window.api.getComponents();
+      const databaseContents = { components: components || [] };
+      
+      if (Editor) {
+        EditorClass.setEditorData(editor, databaseContents);
+      }
+    } catch (error) {
+      console.error('Error loading database contents:', error);
+      if (editor) {
+        EditorClass.setEditorData(editor, { components: [] });
+      }
+    }
+  };
+
+  await loadDatabaseContents();
+
+  const saveBtn = document.getElementById('save-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        if (!editor) {
+          alert('Editor not initialized');
+          return;
+        }
+
+        const data = Editor.getEditorData(editor);
+        
+        // Validate the data structure
+        if (!data || !Array.isArray(data.components)) {
+          alert('Invalid data format. Expected: { "components": [...] }');
+          return;
+        }
+
+        // Get existing components to determine which ones to delete
+        const existingComponents = await window.api.getComponents();
+        const existingIds = new Set(existingComponents.map(comp => comp.id));
+        const newIds = new Set(data.components.map(comp => comp.id).filter(id => id));
+
+        // Delete components that are no longer in the new data
+        for (const existingId of existingIds) {
+          if (!newIds.has(existingId)) {
+            await window.api.deleteComponent(existingId);
+          }
+        }
+
+        // Add or update components from the imported data
+        for (const component of data.components) {
+          if (component.id && existingIds.has(component.id)) {
+            // Update existing component
+            await window.api.updateComponent(component);
+          } else {
+            // Add new component (remove id to let the system generate a new one)
+            const newComponent = { ...component };
+            delete newComponent.id;
+            await window.api.addComponent(newComponent);
+          }
+        }
+
+        alert('Database imported successfully!');
+        
+        // Reload the current contents to reflect the changes
+        await loadDatabaseContents();
+        
+      } catch (error) {
+        console.error('Error saving database:', error);
+        alert('Error saving database. Please check the JSON format and try again.');
+      }
+    });
+  }
+
+});
+</script>
