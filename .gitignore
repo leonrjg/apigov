@@ -1,5 +1,8 @@
 # Logs
 **/.DS_Store
+.npmrc
+.idea
+.claude
 logs
 *.log
 npm-debug.log*
