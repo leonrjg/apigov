@@ -1,4 +1,4 @@
-// component-model.js - Centralized component entity model and validation
+// Centralized component entity model and validation
 
 class Component {
   constructor(data = {}) {

@@ -8,15 +8,6 @@
 // Self-initializing graph content
 (function() {
   'use strict';
-
-  // Get dependencies from module system
-  const Sidebar = window.requireModule('Sidebar');
-
-  // Trigger graph rendering
-  if (typeof renderGraphView === 'function') {
-    renderGraphView();
-  } else {
-    console.error('renderGraphView function not found');
-  }
+  renderGraphView();
 })();
 </script>

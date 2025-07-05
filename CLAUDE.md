@@ -55,3 +55,4 @@ When using `hx-vals` to pass parameters to dynamically loaded content:
 - Use existing utilities if possible.
 - Never use setTimeout hacks to handle initialization.
 - Don't use fallbacks, choose a way to do things and stick to it.
+- Avoid overly-defensive programming; failures (such as adding an eventListener to a non-existing element) should cause errors.

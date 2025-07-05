@@ -1,25 +1,15 @@
 document.addEventListener('htmx:afterSettle', async (event) => {
-    console.log('🔍 Form.js: htmx:afterSettle event fired');
-    console.log('🔍 Form.js: Event target:', event.detail.target);
-    console.log('🔍 Form.js: Looking for #endpoint-form...');
-    
     const endpointForm = event.detail.target.querySelector('#endpoint-form');
-    console.log('🔍 Form.js: Found #endpoint-form:', !!endpointForm);
-    
     if (!endpointForm) return;
-      
-    console.log('🔍 Form.js: Starting form initialization...');
 
     // Wait for all required modules to be available
     const requiredModules = [
       'DependencyValidationService',
       'MappingService', 
       'Mappings',
-      'DependencyUtils',
       'TagUtils',
       'ComponentDataManager',
       'FieldOperations',
-      'TagManager',
       'DropdownUtils'
     ];
     
@@ -27,11 +17,10 @@ document.addEventListener('htmx:afterSettle', async (event) => {
       FieldDependency,
       MappingService,
       Mappings,
-      DependencyUtils,
       TagUtils,
       ComponentDataManager,
       FieldOperations,
-      TagManager
+      DropdownUtils
     ] = await window.waitForModules(requiredModules);
 
     const dependencyValidationService = new FieldDependency();
@@ -44,6 +33,14 @@ document.addEventListener('htmx:afterSettle', async (event) => {
     const consumesSelect = document.getElementById('endpoint-consumes');
     const jsonEditorContainer = document.getElementById('jsoneditor');
     const fieldsTableBody = document.getElementById('fields-table-body');
+
+    const allComponents = await window.api.getComponents();
+
+    let componentId = null;
+    if (event.detail.xhr && event.detail.xhr.responseURL) {
+        const responseUrl = new URL(event.detail.xhr.responseURL);
+        componentId = responseUrl.searchParams.get('id');
+    }
 
     missingMappings.render('missing-mappings-container');
 
@@ -59,7 +56,7 @@ document.addEventListener('htmx:afterSettle', async (event) => {
     // Initialize managers with injected services (modules already loaded above)
     const dataManager = new ComponentDataManager();
     const fieldOps = new FieldOperations(fieldsTableBody, dataManager);
-    const tagManager = new TagManager(consumesSelect);
+    let dropdown = null;
 
     // Set up event-driven synchronization
     dataManager.onDataChange((data) => {
@@ -67,7 +64,6 @@ document.addEventListener('htmx:afterSettle', async (event) => {
       checkFieldDependencies();
     });
 
-    let allComponents = [];
     let editor;
 
     // Delegate to fieldOps
@@ -80,39 +76,6 @@ document.addEventListener('htmx:afterSettle', async (event) => {
     };
 
     // Get available fields for resolution (current component + consumed components)
-    const getAvailableFieldsForResolution = (excludeComponent) => {
-      let availableFields = [];
-
-      // Add current component's body fields
-      const currentFields = dataManager.getCurrentFields();
-      const currentComponentName = endpointName.value || 'Current Component';
-      currentFields.forEach(field => {
-        availableFields.push({
-          field: field,
-          source: currentComponentName,
-          display: `${field} (from ${currentComponentName})`
-        });
-      });
-
-      // Add fields from consumed components (except the one we're resolving from)
-      tagManager.getSelectedTags().forEach(consumedComponentId => {
-        const consumedComponent = allComponents.find(comp => comp.id === consumedComponentId);
-        if (!consumedComponent || consumedComponent.name === excludeComponent || !consumedComponent.output) return;
-
-        const consumedFields = DependencyUtils.getFieldPaths(consumedComponent.output);
-        consumedFields.forEach(field => {
-          availableFields.push({
-            field: field,
-            source: consumedComponent.name,
-            sourceId: consumedComponent.id,
-            display: `${field} (from ${consumedComponent.name})`
-          });
-        });
-      });
-
-      return availableFields;
-    };
-
     // Check field dependencies and populate the interactive table
     const checkFieldDependencies = (componentData = null) => {
       const componentTypeSelect = document.getElementById('component-type');
@@ -122,44 +85,23 @@ document.addEventListener('htmx:afterSettle', async (event) => {
         id: endpointId.value,
         type: componentTypeSelect?.value,
         input: dataManager.getCurrentData(),
-        consumes: tagManager.getSelectedTags(),
-        mappings: []
+        consumes: dropdown.getSelectedValues(),
       };
 
       // Use dependency validation service to get missing fields and build available fields map
       const currentFields = dataManager.getCurrentFields();
-      const validationResult = dependencyValidationService.validateFieldDependencies(tempComponent, allComponents, currentFields);
+        dependencyValidationService.validateFieldDependencies(tempComponent, allComponents, currentFields);
     };
 
-    // Load all components for autocomplete
-    const loadComponents = async () => {
-      console.log('🔍 loadComponents: Starting...');
-      console.log('🔍 window.api available:', !!window.api);
-      console.log('🔍 window.api.getComponents available:', !!window.api?.getComponents);
+    dropdown = DropdownUtils.createDropdown(consumesSelect, {
+        placeholder: 'Type to search components...',
+        maxItemCount: -1,
+        onSelect: (selectedComponent) => {
+            //checkFieldDependencies(selectedComponent);
+        },
+        onRemove: (removedComponent) => {
 
-      try {
-        console.log('🔍 loadComponents: Calling window.api.getComponents...');
-        allComponents = await window.api.getComponents();
-        console.log('🔍 loadComponents: Got components:', allComponents?.length || 0);
-        
-        tagManager.setComponents(allComponents);
-        console.log('🔍 loadComponents: Set components on tagManager');
-
-        // Trigger dependency check after components are loaded
-        checkFieldDependencies();
-        console.log('🔍 loadComponents: Completed successfully');
-      } catch (e) {
-        console.error('❌ loadComponents: Error loading components:', e);
-        allComponents = [];
-      }
-    };
-
-  // Initialize managers and load data
-    console.log('🔍 Form: Starting loadComponents...');
-    loadComponents().then(() => {
-      tagManager.initializeAutocomplete();
-    }).catch(error => {
-      console.error('❌ Form: loadComponents failed:', error);
+        }
     });
 
     // Add event listener for Add Field button
@@ -179,80 +121,76 @@ document.addEventListener('htmx:afterSettle', async (event) => {
     }
 
 
-    if (jsonEditorContainer && window.JSONEditor) {
-      editor = new JSONEditor(jsonEditorContainer, {
+    editor = new JSONEditor(jsonEditorContainer, {
         mode: 'code',
         mainMenuBar: false,
         navigationBar: false,
         onChange: () => {
-          try {
-            const jsonData = editor.get();
-            dataManager.updateCurrentComponentData(jsonData);
-            updateFieldsTable(jsonData);
-            checkFieldDependencies();
-          } catch (ignored) { }
-        }
-      });
-
-      dataManager.setEditor(editor);
-
-      // If textarea has value, set it in the editor
-      if (endpointBody.value) {
-        try {
-          const jsonData = JSON.parse(endpointBody.value);
-          editor.set(jsonData);
-          updateFieldsTable(jsonData);
-        } catch (e) {
-          editor.set({});
-          updateFieldsTable({});
-        }
-      }
-    }
-
-    // Prefill form if editing - get editId from HTMX response URL
-    let editId = null;
-    if (event.detail.xhr && event.detail.xhr.responseURL) {
-      const responseUrl = new URL(event.detail.xhr.responseURL);
-      editId = responseUrl.searchParams.get('id');
-    }
-    if (editId) {
-      window.api.getComponents().then(components => {
-        const component = components.find(comp => comp.id === editId);
-        if (component) {
-          // Initialize managers with component data
-          dataManager.initializeForEdit(component);
-          tagManager.loadTagsFromComponent(component);
-
-          endpointId.value = component.id;
-          endpointName.value = component.name;
-
-          // Set component type
-          const componentTypeSelect = document.getElementById('component-type');
-          if (component.type) {
-            componentTypeSelect.value = component.type;
-          }
-
-          endpointBody.value = JSON.stringify(component.input || {});
-          if (editor) {
             try {
-              dataManager.updateDisplay();
-            } catch (e) {
-              editor.set({});
-              dataManager.notifyDataChange({});
+                const jsonData = editor.get();
+                dataManager.updateCurrentComponentData(jsonData);
+                updateFieldsTable(jsonData);
+                checkFieldDependencies();
+            } catch (ignored) {
             }
-          }
-
-          // Check field dependencies after loading the component
-          checkFieldDependencies(component);
-
-          // Update mapping table with component's mappings
-          missingMappings.updateMappingTable(component.mappings || [], allComponents, component.id);
         }
-      });
-    } else {
-      // Initialize empty component data for new components
-      dataManager.setComponentData(null);
+    });
+
+    dataManager.setEditor(editor);
+
+    // If textarea has value, set it in the editor
+    if (endpointBody.value) {
+        let jsonData = {};
+        try {
+            jsonData = JSON.parse(endpointBody.value);
+        } catch (e) {
+            console.warn('❌ Form: Invalid JSON, initializing with empty object.', e);
+        }
+        editor.set(jsonData);
+        updateFieldsTable(jsonData);
     }
+
+    if (componentId) {
+        // Prefill form with existing component data
+        let component = await window.api.getComponent(componentId);
+        if (!component) {
+            console.warn(`Component with ID ${componentId} not found`);
+        }
+
+        dataManager.initializeForEdit(component);
+
+        endpointId.value = component.id;
+        endpointName.value = component.name;
+
+        // Set component type
+        const componentTypeSelect = document.getElementById('component-type');
+        if (component.type) {
+            componentTypeSelect.value = component.type;
+        }
+
+        dropdown.updateItems(
+            allComponents.filter(c => c.id !== componentId).map(c => c.name),
+            allComponents.filter(c => component.consumes.includes(c.id)).map(c => c.name)
+        );
+
+        endpointBody.value = JSON.stringify(component.input || {});
+        if (editor) {
+            try {
+                dataManager.updateDisplay();
+            } catch (e) {
+                editor.set({});
+                dataManager.notifyDataChange({});
+            }
+        }
+
+        // Check field dependencies after loading the component
+        checkFieldDependencies(component);
+
+        // Update mapping table with component's mappings
+        missingMappings.updateMappingTable(component.mappings || [], allComponents, component.id);
+    }
+    // Initialize empty component data for new components
+    //dataManager.setComponentData(null);
 
     endpointForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -275,7 +213,8 @@ document.addEventListener('htmx:afterSettle', async (event) => {
         name: endpointName.value,
         input: submissionData.input,
         output: submissionData.output,
-        consumes: tagManager.getSelectedTags() || [],
+          // 'consumes' is an array of component IDs, not names; getSelectedValues returns names
+        consumes: allComponents.filter(c => (dropdown.getSelectedValues() || []).includes(c.name)).map(c => c.id),
         type: componentTypeSelect.value
       };
 
@@ -288,7 +227,6 @@ document.addEventListener('htmx:afterSettle', async (event) => {
       }
       endpointForm.reset();
       endpointId.value = '';
-      tagManager.clearAll();
 
       if (window.htmx && document.getElementById('main-content')) {
         htmx.ajax('GET', 'components.html', '#main-content');

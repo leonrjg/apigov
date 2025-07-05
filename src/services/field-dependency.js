@@ -19,7 +19,6 @@ class FieldDependency {
         hasMissingDependencies: false
       };
     }
-    console.log(component);
 
     const dependencyCheck = await this.DependencyUtils.check(component.id);
 

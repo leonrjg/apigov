@@ -6,12 +6,13 @@ const Component = require('./models/component');
 
 const dbPath = path.join(app.getPath('userData'), 'database.json');
 
+let currentDatabaseContents;
 
 // Helper function to read from database.json
 const readDatabase = () => {
   try {
-    const data = fs.readFileSync(dbPath, 'utf8');
-    return JSON.parse(data);
+    if (!currentDatabaseContents) currentDatabaseContents = fs.readFileSync(dbPath, 'utf8');
+    return JSON.parse(currentDatabaseContents);
   } catch (error) {
     console.error('Error reading database:', error);
     return { components: [] };
@@ -21,15 +22,30 @@ const readDatabase = () => {
 // Helper function to write to database.json
 const writeDatabase = (data) => {
   try {
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
+    const databaseString = JSON.stringify(data, null, 2);
+    fs.writeFileSync(dbPath, databaseString, 'utf8');
+    currentDatabaseContents = databaseString
   } catch (error) {
     console.error('Error writing database:', error);
   }
 };
 
-// Legacy validation functions - replaced by ComponentModel methods but kept for backward compatibility
+ipcMain.handle('save-database', async (_, data) => {
+    try {
+        // Validate mappings integrity using centralized model
+        const validationErrors = Component.validateMappings(data.components);
+        if (validationErrors.length > 0) {
+          console.warn('Validation errors found:', validationErrors);
+          throw new Error('Database validation failed. See console for details.');
+        }
+        writeDatabase(data);
+        return true;
+    } catch (error) {
+        console.error('Error saving database:', error.message);
+        throw error;
+    }
+});
 
-// IPC Handlers
 ipcMain.handle('get-components', async () => {
   const db = readDatabase();
   
@@ -40,6 +56,26 @@ ipcMain.handle('get-components', async () => {
   }
   
   return db.components;
+});
+
+ipcMain.handle('get-component', async (_, id, name) => {
+    const db = readDatabase();
+    const component = db.components.find(comp => comp.id === id || comp.name === name);
+
+    if (!component) {
+        throw new Error(`Component with values id=${id}, name=${name} not found`);
+    }
+
+    try {
+        return new Component(component);
+    } catch (error) {
+        console.error('Error validating component:', error.message);
+        throw error;
+    }
+});
+
+ipcMain.handle('get-database', async () => {
+  return readDatabase();
 });
 
 ipcMain.handle('validate-database', async () => {
