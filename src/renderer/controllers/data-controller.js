@@ -41,9 +41,5 @@
 
   const dataController = new DataController();
 
-  if (typeof window.moduleRegistry !== 'undefined') {
-    window.moduleRegistry.register('DataController', dataController);
-  } else {
-    window.DataController = dataController;
-  }
+  window.moduleRegistry.register('DataController', dataController);
 })();

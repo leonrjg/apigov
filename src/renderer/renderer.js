@@ -49,35 +49,6 @@ document.addEventListener('click', async (event) => {
     }
     return;
   }
-  
-  // Handle delete
-  const deleteButton = event.target.closest('.btn-error');
-  if (deleteButton && deleteButton.dataset.id) {
-    const id = deleteButton.dataset.id;
-    
-    // Check if component is consumed by other components
-    const components = await window.api.getComponents();
-    const componentToDelete = components.find(comp => comp.id === id);
-    const consumingComponents = components.filter(comp => 
-      comp.consumes && comp.consumes.includes(id)
-    );
-    
-    if (consumingComponents.length > 0) {
-      const componentNames = consumingComponents.map(comp => comp.name).join(', ');
-      const confirmed = confirm(
-        `Component "${componentToDelete.name}" is required by [${componentNames}]\n\n` +
-        `Continue?`
-      );
-      
-      if (!confirmed) {
-        return;
-      }
-    }
-    
-    await window.api.deleteComponent(id);
-    renderComponents();
-    return;
-  }
 
   // Handle accordion toggle
   let tr = event.target.closest('tr.endpoint-row');
@@ -86,9 +57,6 @@ document.addEventListener('click', async (event) => {
     // Find the accordion row for this endpoint
     const accordionRow = document.querySelector(`tr.accordion-row[data-id="accordion-${id}"]`);
     const isHidden = accordionRow && accordionRow.classList.contains('hidden');
-    // Close all accordions
-    //document.querySelectorAll('.accordion-row').forEach(row => row.classList.add('hidden'));
-    // Toggle this one only if it was hidden
     if (accordionRow) {
         if (isHidden) {
             accordionRow.classList.remove('hidden');
@@ -96,7 +64,6 @@ document.addEventListener('click', async (event) => {
             accordionRow.classList.add('hidden');
         }
     }
-    // If it was already open, it will now be closed (no need to do anything else)
   }
 });
 

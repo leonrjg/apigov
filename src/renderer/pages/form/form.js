@@ -213,7 +213,6 @@ document.addEventListener('htmx:afterSettle', async (event) => {
         name: endpointName.value,
         input: submissionData.input,
         output: submissionData.output,
-          // 'consumes' is an array of component IDs, not names; getSelectedValues returns names
         consumes: allComponents.filter(c => (dropdown.getSelectedValues() || []).includes(c.name)).map(c => c.id),
         type: componentTypeSelect.value
       };

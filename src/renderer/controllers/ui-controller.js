@@ -92,10 +92,9 @@
       const id = deleteButton.dataset.id;
       
       // Check if component is consumed by other components
-      const components = await this.dataController.getComponents();
-      const componentToDelete = this.dataController.findComponentById(id);
-      const consumingComponents = this.dataController.findComponentsConsuming(id);
-      
+      const componentToDelete = await this.dataController.findComponentById(id);
+      const consumingComponents = await this.dataController.findComponentsConsuming(id);
+
       if (consumingComponents.length > 0) {
         const componentNames = consumingComponents.map(comp => comp.name).join(', ');
         const confirmed = confirm(
