@@ -31,15 +31,15 @@ const createDropdown = (element, config = {}) => {
     throw error;
   }
 
-  if (libConfig.onSelect) {
-    element.addEventListener('addItem', (event) => {
-      libConfig.onSelect(event.detail.value);
+  if (config.onSelect) {
+    element.addEventListener('addItem', async (event) => {
+      await config.onSelect(event.detail.value);
     });
   }
   
-  if (libConfig.onRemove) {
+  if (config.onRemove) {
     element.addEventListener('removeItem', (event) => {
-      libConfig.onRemove(event.detail.value);
+      config.onRemove(event.detail.value);
     });
   }
 
@@ -58,16 +58,5 @@ const createDropdown = (element, config = {}) => {
 };
 
 
-// Export functions
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    createDropdown
-  };
-} else {
-  // Browser environment - register with module system
-  const DropdownUtils = {
-    createDropdown
-  };
-
-  window.moduleRegistry.register('DropdownUtils', DropdownUtils);
-}
+const DropdownUtils = {createDropdown};
+window.moduleRegistry.register('DropdownUtils', DropdownUtils);

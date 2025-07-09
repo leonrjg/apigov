@@ -45,8 +45,8 @@ class ComponentDataManager {
 
   updateDisplay() {
     const dataToShow = this.currentView === 'input' 
-      ? (this.currentComponentData.input || {})
-      : (this.currentComponentData.output || {});
+      ? (this.currentComponentData?.input || {})
+      : (this.currentComponentData?.output || {});
         this.editor.set(dataToShow);
     this.notifyDataChange(dataToShow);
     return dataToShow;

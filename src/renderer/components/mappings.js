@@ -178,10 +178,10 @@ class Mappings {
     
     const dropdown = this.DropdownUtils.createDropdown(selector, {
       maxItemCount: -1, // Allow unlimited items for search, but we'll handle single selection
-      onSelect: (selectedValue) => {
+      onSelect: async (selectedValue) => {
         // Store the selected value on the selector element
         selector._selectedValue = selectedValue;
-        this.handleAddMapping(selector.id, componentId, targetField, targetComponentName);
+        await this.handleAddMapping(selector.id, componentId, targetField, targetComponentName);
       }
     });
     
@@ -385,6 +385,7 @@ class Mappings {
    * @param {string} currentComponentId - Current component ID from form
    */
   updateMappingTable(mappings = [], allComponents = [], currentComponentId = null) {
+    console.log(mappings, allComponents, currentComponentId);
     const mappingTableBody = document.getElementById('mapping-table-body');
     const mappingSection = document.getElementById('mapping-table-section');
     
@@ -407,8 +408,8 @@ class Mappings {
 
       return `
         <tr>
-          <td class="font-mono text-sm">${this.escapeHtml(mapping.target_field)}</td>
           <td class="font-mono text-sm">${this.escapeHtml(mapping.source_field)}</td>
+          <td class="font-mono text-sm">${this.escapeHtml(mapping.target_field)}</td>
           <td>
             <span class="badge badge-outline badge-sm">${this.escapeHtml(targetComponentName)}</span>
           </td>
