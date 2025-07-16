@@ -2,71 +2,9 @@
   "components": [
     {
       "name": "CreateExchangeIntent",
-      "input": {
-        "product_id": "string",
-        "sub_product_id": "string",
-        "touchpoint": "PROTECTIONS",
-        "touchpoint_detail": "VERDI-CANCELLATION-FLOW",
-        "marketplace": "string",
-        "buying_mode": "string",
-        "plan_change": {
-          "current_plan": {
-            "insurance_purchase_key": "..."
-          },
-          "new_plan": {
-            "product_id": "PERSONAL",
-            "sub_product_id": "accident",
-            "touch_point": "PROTECTIONS",
-            "touch_point_detail": "BANNER-ADMIN",
-            "user_id": 1835398791,
-            "entity_type": "USER",
-            "entity_id": "1835398791",
-            "site_id": "MLB",
-            "platform": "ANDROID",
-            "channel": "NATIVO",
-            "marketplace": "OFF",
-            "options": [
-              {
-                "id": "3ed092c9-8998-4f9e-bcb0-7ffbacfbc0a2"
-              },
-              {
-                "insured_amount": 10000,
-                "id": "93d34323-57b3-416b-a98d-20d6245ff835"
-              },
-              {
-                "insured_amount": 10000,
-                "id": "1feb89ce-3c6e-447e-bda7-c43b908091c8"
-              }
-            ],
-            "total_price": 71.88,
-            "total_monthly_price": 5.99,
-            "plan_id": "accident_mlb-simple",
-            "currency_id": "BRL",
-            "buying_mode": "SUBSCRIPTION",
-            "incentive": {
-              "discount": {
-                "type": "percent",
-                "amount": 100,
-                "cap": 30,
-                "given": 5.99
-              },
-              "labels": [
-                "MLB_MP_ACT_PRUEBA_AYE_100_MAYO_PERSONAL"
-              ],
-              "type": "discount",
-              "name": "",
-              "period": 1,
-              "redeemed_id": "11054001"
-            },
-            "offering_id": "a8d5b0d4-3b5c-46d6-b401-d9b028b0aa59",
-            "offering_visualization_id": "a8d5b0d4-3b5c-46d6-b401-d9b028b0aa59",
-            "product_attributes": [],
-            "test_user": false
-          }
-        }
-      },
+      "input": {},
       "output": {
-        "a": 1
+        "test": 1
       },
       "consumes": [
         "612e002d-e11d-4252-a140-decb4efb6a4f",
@@ -81,23 +19,7 @@
     {
       "name": "CreateExchangePurchase",
       "input": {
-        "user_id": 1,
-        "marketplace": "OFF",
-        "entity_type": "quote",
-        "entity_id": "d19a5204-acd3-49e9-b1fc-55febf14a8ag-example",
-        "cost": 119.88,
-        "currency_id": "EXAID",
-        "buying_mode": "SUBSCRIPTION",
-        "insurance_options": [
-          {
-            "product_id": "personal",
-            "quote_id": "d19a5204-acd3-49e9-b1fc-55febf14a8ag-example"
-          }
-        ],
-        "product_creation": "sync",
-        "previous_data": {
-          "original_insurance_purchase_key": "..."
-        }
+        "test": "1"
       },
       "output": {
         "insurance_purchase_key": "..."

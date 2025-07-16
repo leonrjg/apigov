@@ -307,39 +307,159 @@ class Component {
   }
 
   /**
-   * Get field paths from a component's input or output schema
+   * Get schema field information with array element support and detailed field info
+   * @param {Object} schema - The schema object (input or output)
+   * @param {string} prefix - Path prefix for nested calls
+   * @returns {Array} Array of field objects with path, type, and value
+   */
+  static getSchema(schema, prefix = '') {
+    if (!schema || typeof schema !== 'object') return [];
+
+    const buildPath = (currentPath, key) => currentPath ? `${currentPath}.${key}` : key;
+
+    const formatValue = (value) => {
+      if (Array.isArray(value)) return `[${value.length} items]`;
+      if (typeof value === 'string' && value.length > 50) return value.substring(0, 50) + '...';
+      if (value === null) return 'null';
+      return value;
+    };
+
+    const getArrayElementFields = (arrayElements, arrayPath) => {
+      const uniqueFields = new Map();
+      arrayElements
+        .filter(element => typeof element === 'object' && element !== null && !Array.isArray(element))
+        .flatMap(element => this.getSchema(element))
+        .forEach(field => {
+          const fullPath = `${arrayPath}[:].${field.path}`;
+          uniqueFields.set(fullPath, { path: fullPath, type: field.type, value: field.value });
+        });
+      return Array.from(uniqueFields.values());
+    };
+
+    const processField = (key) => {
+      const path = buildPath(prefix, key);
+      const value = schema[key];
+      const type = Array.isArray(value) ? 'array' : typeof value;
+
+      if (Array.isArray(value)) {
+        const arrayElementFields = getArrayElementFields(value, path);
+        return arrayElementFields.length > 0 ? arrayElementFields : [{ path, type, value: formatValue(value) }];
+      }
+
+      if (typeof value === 'object' && value !== null) {
+        return this.getSchema(value, path);
+      }
+
+      return [{ path, type, value: formatValue(value) }];
+    };
+
+    return Object.keys(schema).flatMap(processField);
+  }
+
+  /**
+   * Get field paths from a component's input or output schema (leaf paths only)
    * @param {Object} schema - The schema object (input or output)
    * @returns {Array} Array of field paths
    */
   static getFieldPaths(schema) {
-    if (!schema || typeof schema !== 'object') return [];
-    
-    const paths = [];
-    
-    function traverse(obj, currentPath = '') {
-      Object.keys(obj).forEach(key => {
-        const path = currentPath ? `${currentPath}.${key}` : key;
-        paths.push(path);
-        
-        if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-          traverse(obj[key], path);
+    return this.getSchema(schema).map(field => field.path);
+  }
+
+  static isFieldAvailableInConsumedComponents(field, excludeComponentId, consumedIds, allComponents) {
+    for (const consumedComponentId of consumedIds) {
+      if (consumedComponentId === excludeComponentId) continue;
+
+      const consumedComponent = allComponents.find(comp => comp.id === consumedComponentId);
+      if (!consumedComponent || !consumedComponent.input) continue;
+
+      const consumedFields = this.getFieldPaths(consumedComponent.input);
+      if (consumedFields.includes(field)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  static async check (componentId, allComponents = null) {
+    return (await this.checkComponentDependencies(componentId));
+  }
+
+// Check field dependencies for a component
+  static async checkComponentDependencies(componentId) {
+    const allComponents = await window.api.getComponents();
+    const component = allComponents.find(comp => comp.id === componentId);
+
+    if (!component) {
+      throw new Error(`Component with ID ${componentId} not found`);
+    }
+
+    // Only check endpoints for dependencies
+    if (component.type !== 'endpoint') {
+      return {hasMissingDependencies: false, missingFields: []};
+    }
+
+    if (!component.consumes || component.consumes.length === 0) {
+      return {hasMissingDependencies: false, missingFields: []};
+    }
+
+    const currentFields = this.getFieldPaths(component.input || {});
+    const missingFields = [];
+
+    component.consumes.forEach(consumedComponentId => {
+      const consumedComponent = allComponents.find(comp => comp.id === consumedComponentId);
+      if (!consumedComponent || !consumedComponent.input || consumedComponent.type !== 'endpoint') return;
+
+      const consumedFields = this.getFieldPaths(consumedComponent.input);
+
+      consumedFields.forEach(field => {
+        if (!currentFields.includes(field) && !this.isFieldAvailableInConsumedComponents(field, consumedComponentId, component.consumes, allComponents)) {
+          // Check if this field is resolved via mapping with integrity validation
+          const isResolvedByMapping = component.mappings &&
+              Array.isArray(component.mappings) &&
+              component.mappings.some(mapping => {
+                // Basic mapping structure validation
+                if (mapping.target_component_id !== consumedComponent.id ||
+                    mapping.target_field !== field) {
+                  return false;
+                }
+
+                // If no source_component_id, validate field exists in current component
+                if (!mapping.source_component_id) {
+                  return currentFields.includes(mapping.source_field);
+                }
+
+                // Cross-component mapping validation
+                const sourceComponent = allComponents.find(comp => comp.id === mapping.source_component_id);
+                if (!sourceComponent) {
+                  return false; // Source component doesn't exist
+                }
+
+                // Check if source field exists in source component
+                // For cross-component mappings, check both input and output fields
+                const sourceInputFields = this.getFieldPaths(sourceComponent.input || {});
+                const sourceOutputFields = this.getFieldPaths(sourceComponent.output || {});
+                const allSourceFields = [...sourceInputFields, ...sourceOutputFields];
+
+                return allSourceFields.includes(mapping.source_field);
+              });
+
+          if (!isResolvedByMapping) {
+            missingFields.push(`${field} (from ${consumedComponent.name})`);
+          }
         }
       });
-    }
-    
-    traverse(schema);
-    return paths;
-  }
+    });
+
+    return {
+      hasMissingDependencies: missingFields.length > 0,
+      missingFields: missingFields
+    };
+  };
 }
 
 // Export for both Node.js and browser environments
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = Component;
 } else if (typeof window !== 'undefined') {
-  if (typeof window.moduleRegistry !== 'undefined') {
-    window.moduleRegistry.register('ComponentModel', Component);
-  } else {
-    // Fallback for backwards compatibility
-    window.ComponentModel = Component;
-  }
+  window.moduleRegistry.register('ComponentModel', Component);
 }

@@ -215,7 +215,8 @@ function createWindow () {
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'renderer/preload.js')
-    }
+    },
+    icon: path.join(__dirname, 'assets/icon'),
   })
 
   // and load the index.html of the app.

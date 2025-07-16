@@ -60,14 +60,5 @@
     await appController.renderGraphView();
   };
 
-  if (typeof window.moduleRegistry !== 'undefined') {
-    window.moduleRegistry.register('AppController', appController);
-  } else {
-    window.AppController = appController;
-  }
-
-  // Initialize Lucide icons
-  if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
-  }
+  window.moduleRegistry.register('AppController', appController);
 })();

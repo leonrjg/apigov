@@ -1,7 +1,6 @@
 class FieldDependency {
   constructor() {
-    // Pure business logic service - no UI dependencies
-    this.DependencyUtils = window.requireModule('DependencyUtils');
+    this.Component = window.requireModule('ComponentModel');
   }
 
   /**
@@ -20,7 +19,7 @@ class FieldDependency {
       };
     }
 
-    const dependencyCheck = await this.DependencyUtils.check(component.id);
+    const dependencyCheck = await this.Component.check(component.id);
 
     if (!dependencyCheck.hasMissingDependencies) {
       return {
@@ -53,7 +52,7 @@ class FieldDependency {
       const consumedComponent = allComponents.find(comp => comp.id === consumedComponentId);
       if (!consumedComponent || !consumedComponent.input || consumedComponent.type !== 'endpoint') return;
 
-      const consumedFields = this.DependencyUtils.getFieldPaths(consumedComponent.input);
+      const consumedFields = this.Component.getFieldPaths(consumedComponent.input);
       
       consumedFields.forEach(field => {
         if (!this.isFieldResolved(field, consumedComponent, component, allComponents, currentFields)) {
@@ -113,7 +112,7 @@ class FieldDependency {
    */
   isFieldAvailableInConsumedComponents(field, excludeComponentName, selectedTags, allComponents) {
     const excludeComponentId = this.getComponentIdByName(excludeComponentName, allComponents);
-    return this.DependencyUtils.isFieldAvailableInConsumedComponents(field, excludeComponentId, selectedTags, allComponents);
+    return this.Component.isFieldAvailableInConsumedComponents(field, excludeComponentId, selectedTags, allComponents);
   }
 
   /**
@@ -128,14 +127,6 @@ class FieldDependency {
   }
 
   /**
-   * Validates component type for dependency checking
-   * @param {string} componentType - Type to validate
-   * @returns {boolean} True if type requires dependency checking
-   */
-  requiresDependencyValidation(componentType) {
-    return componentType === 'endpoint';
-  }
-  /**
    * Gets all missing mappings across all components
    * @param {Array} components - All components
    * @returns {Array} Array of missing mapping objects
@@ -148,7 +139,7 @@ class FieldDependency {
         continue;
       }
 
-      const dependencyCheck = await this.DependencyUtils.checkComponentDependencies(component.id);
+      const dependencyCheck = await this.Component.checkComponentDependencies(component.id);
       
       if (dependencyCheck.hasMissingDependencies) {
         dependencyCheck.missingFields.forEach(missingFieldStr => {
@@ -177,5 +168,5 @@ class FieldDependency {
 (function() {
   'use strict';
 
-  window.moduleRegistry.register('DependencyValidationService', FieldDependency, ['DependencyUtils']);
+  window.moduleRegistry.register('DependencyValidationService', FieldDependency, ['ComponentModel']);
 })();

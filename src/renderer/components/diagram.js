@@ -32,10 +32,6 @@ class Diagram {
       
       // Render diagram using selected renderer
       await this.renderDiagram();
-      
-      if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-      }
     } catch (error) {
       console.error('[Diagram] Render error:', error);
       container.innerHTML = '<div class="alert alert-error">Failed to load diagram: ' + error.message + '</div>';
@@ -54,10 +50,10 @@ class Diagram {
       <div class="diagram-container" data-instance-id="${instanceId}">
         <div class="mb-4">
           <button class="btn btn-primary" style="display:none" data-action="open-external">
-            <i data-lucide="external-link"></i> Open in ${rendererName}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5"> <path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" /> <path d="M11.603 7.963a.75.75 0 0 0-.977 1.138 2.5 2.5 0 0 1 .142 3.667l-3 3a2.5 2.5 0 0 1-3.536-3.536l1.225-1.224a.75.75 0 0 0-1.061-1.06l-1.224 1.224a4 4 0 1 0 5.656 5.656l3-3a4 4 0 0 0-.225-5.865Z" /> </svg> Open in ${rendererName}
           </button>
           <button class="btn btn-secondary ml-2" data-action="copy-json">
-            <i data-lucide="copy"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /> </svg>
             Copy JSON
           </button>
         </div>

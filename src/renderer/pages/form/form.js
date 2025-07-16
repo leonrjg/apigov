@@ -47,10 +47,12 @@ document.addEventListener('htmx:afterSettle', async (event) => {
     // Set up callback for mapping changes
     missingMappings.setOnMappingAdded((mapping, updatedComponent) => {
       missingMappings.updateMappingTable(updatedComponent.mappings || [], allComponents, endpointId.value);
+      missingMappings.updateFieldUsageTable(endpointId.value, allComponents);
     });
 
     missingMappings.setOnMappingRemoved(async (mappingRemoved, updatedComponent) => {
         missingMappings.updateMappingTable(updatedComponent.mappings || [], allComponents, endpointId.value);
+        missingMappings.updateFieldUsageTable(endpointId.value, allComponents);
     })
 
     // Initialize managers with injected services (modules already loaded above)
@@ -188,9 +190,19 @@ document.addEventListener('htmx:afterSettle', async (event) => {
 
         // Update mapping table with component's mappings
         missingMappings.updateMappingTable(component.mappings || [], allComponents, component.id);
+        
+        // Update field usage table
+        missingMappings.updateFieldUsageTable(component.id, allComponents);
+    } else {
+        // Initialize data manager for new components
+        dataManager.setComponentData({ input: {}, output: {} });
+        
+        // Populate dropdown with all available components for new component creation
+        dropdown.updateItems(
+            allComponents.map(c => c.name),
+            [] // No pre-selected components for new components
+        );
     }
-    // Initialize empty component data for new components
-    //dataManager.setComponentData(null);
 
     endpointForm.addEventListener('submit', async (event) => {
       event.preventDefault();

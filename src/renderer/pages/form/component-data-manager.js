@@ -4,6 +4,9 @@ class ComponentDataManager {
     this.editor = null;
     this.onDataChangeCallbacks = [];
     this.currentView = 'input'; // 'input' or 'output'
+    
+    // Get dependencies from module system
+    this.Component = window.requireModule('ComponentModel');
   }
 
   setEditor(editor) {
@@ -37,7 +40,7 @@ class ComponentDataManager {
   getCurrentFields() {
     try {
       const currentData = this.getCurrentData();
-      return window.DependencyUtils.getFieldPaths(currentData);
+      return this.Component.getFieldPaths(currentData);
     } catch (e) {
       return [];
     }
@@ -114,5 +117,5 @@ class ComponentDataManager {
 // Register with module system
 (function() {
   'use strict';
-  window.moduleRegistry.register('ComponentDataManager', ComponentDataManager);
+  window.moduleRegistry.register('ComponentDataManager', ComponentDataManager, ['ComponentModel']);
 })();

@@ -4,15 +4,46 @@
   "description": "Microservice Schema Governance Tool",
   "keywords": [],
   "main": "./src/main.js",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "author": "leonrjg",
   "scripts": {
-    "start": "electron .",
-    "test": "node test-runner.js"
-  },
-  "dependencies": {
+    "start": "electron-forge start",
+    "test": "node test-runner.js",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-squirrel": "^7.8.1",
+    "@electron-forge/maker-dmg": "^7.8.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
+    "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron/fuses": "^1.8.0",
     "electron": "35.0.0"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+          "icon": "src/assets/icon"
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-dmg",
+          "config": {
+            "format": "ULFO",
+            "icon": "src/assets/icon.icns",
+            "background": "src/assets/dmg-bg.png"
+          },
+          "platforms": [
+            "darwin"
+          ]
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1"
   }
 }

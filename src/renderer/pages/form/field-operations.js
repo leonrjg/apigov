@@ -4,7 +4,7 @@ class FieldOperations {
     this.dataManager = dataManager;
     
     // Get dependencies from module system
-    this.DependencyUtils = window.requireModule('DependencyUtils');
+    this.Component = window.requireModule('ComponentModel');
   }
 
   updateFieldsTable(jsonData) {
@@ -13,7 +13,7 @@ class FieldOperations {
       return;
     }
 
-    const fields = this.DependencyUtils.flattenObject(jsonData);
+    const fields = this.Component.getSchema(jsonData);
     if (fields.length === 0) {
       this.fieldsTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 italic">No fields defined</td></tr>';
       return;
@@ -169,7 +169,7 @@ class FieldOperations {
   'use strict';
 
   if (typeof window.moduleRegistry !== 'undefined') {
-    window.moduleRegistry.register('FieldOperations', FieldOperations, ['DependencyUtils']);
+    window.moduleRegistry.register('FieldOperations', FieldOperations, ['ComponentModel']);
   } else {
     // Fallback for backwards compatibility
     window.FieldOperations = FieldOperations;

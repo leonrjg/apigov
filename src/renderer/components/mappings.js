@@ -7,7 +7,7 @@ class Mappings {
     this.onMappingAdded = null;
     
     // Get dependencies from module system
-    this.DependencyUtils = window.requireModule('DependencyUtils');
+    this.Component = window.requireModule('ComponentModel');
     this.DropdownUtils = window.requireModule('DropdownUtils');
   }
 
@@ -53,7 +53,7 @@ class Mappings {
         <div class="card bg-base-100 shadow-sm border border-success/20">
           <div class="card-body">
             <div class="flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+              <span class="text-success"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
               <div>
                 <h3 class="text-lg font-semibold text-success">No pending tasks</h3>
                 <p class="text-sm text-base-content/70">No missing mappings detected</p>
@@ -70,7 +70,9 @@ class Mappings {
       <div class="card bg-base-100 shadow-sm border border-warning/20">
         <div class="card-body">
           <div class="flex items-center gap-3 mb-4">
-            <i data-lucide="alert-triangle" class="h-6 w-6 text-warning"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
             <div>
               <h3 class="text-lg font-semibold text-warning">Pending tasks</h3>
               <p class="text-sm text-base-content/70">Some fields need to be mapped</p>
@@ -213,8 +215,8 @@ class Mappings {
     }
     
     // Add fields from current component's input and output
-    const currentInputFields = this.DependencyUtils.getFieldPaths(currentComponent.input || {});
-    const currentOutputFields = this.DependencyUtils.getFieldPaths(currentComponent.output || {});
+    const currentInputFields = this.Component.getFieldPaths(currentComponent.input || {});
+    const currentOutputFields = this.Component.getFieldPaths(currentComponent.output || {});
     
     currentInputFields.forEach(fieldPath => {
       availableFields.push({
@@ -239,7 +241,7 @@ class Mappings {
       currentComponent.consumes.forEach(consumedId => {
         const consumedComponent = this.allComponents.find(c => c.id === consumedId);
         if (consumedComponent && consumedComponent.name !== targetComponentName) {
-          const outputFields = this.DependencyUtils.getFieldPaths(consumedComponent.output || {});
+          const outputFields = this.Component.getFieldPaths(consumedComponent.output || {});
           outputFields.forEach(fieldPath => {
             availableFields.push({
               field: fieldPath,
@@ -385,7 +387,6 @@ class Mappings {
    * @param {string} currentComponentId - Current component ID from form
    */
   updateMappingTable(mappings = [], allComponents = [], currentComponentId = null) {
-    console.log(mappings, allComponents, currentComponentId);
     const mappingTableBody = document.getElementById('mapping-table-body');
     const mappingSection = document.getElementById('mapping-table-section');
     
@@ -403,16 +404,13 @@ class Mappings {
       const sourceComponent = allComponents.find(comp => comp.id === mapping.source_component_id);
       const targetComponent = allComponents.find(comp => comp.id === mapping.target_component_id);
 
-      const sourceComponentName = sourceComponent ? sourceComponent.name : 'Current component';
+      const sourceComponentName = sourceComponent ? sourceComponent.name : '=';
       const targetComponentName = targetComponent ? targetComponent.name : 'Unknown';
 
       return `
         <tr>
-          <td class="font-mono text-sm">${this.escapeHtml(mapping.source_field)}</td>
-          <td class="font-mono text-sm">${this.escapeHtml(mapping.target_field)}</td>
-          <td>
-            <span class="badge badge-outline badge-sm">${this.escapeHtml(targetComponentName)}</span>
-          </td>
+          <td class="font-mono text-sm"><span class="badge badge-outline badge-sm">${this.escapeHtml(sourceComponentName)}</span> ${this.escapeHtml(mapping.source_field)}</td>
+          <td class="font-mono text-sm"><span class="badge badge-outline badge-sm">${this.escapeHtml(targetComponentName)}</span> ${this.escapeHtml(mapping.target_field)}</td>
           <td>
             <button type="button" class="btn btn-xs btn-error remove-mapping-btn" data-mapping-index="${index}">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
@@ -488,6 +486,68 @@ class Mappings {
   }
 
   /**
+   * Finds all occurrences of current component's fields being used in other components' mappings
+   * @param {string} currentComponentId - ID of the current component
+   * @param {Array} allComponents - Array of all components
+   * @returns {Array} Array of field usage objects
+   */
+  findFieldUsageInOtherComponents(currentComponentId, allComponents) {
+    const currentComponent = allComponents.find(c => c.id === currentComponentId);
+    if (!currentComponent) return [];
+
+    const currentFields = [
+      ...this.Component.getFieldPaths(currentComponent.input || {}),
+      ...this.Component.getFieldPaths(currentComponent.output || {})
+    ];
+
+    return allComponents
+      .filter(component => component.id !== currentComponentId)
+      .flatMap(component => 
+        (component.mappings || [])
+          .filter(mapping => 
+            mapping.source_component_id === currentComponentId &&
+            currentFields.includes(mapping.source_field)
+          )
+          .map(mapping => ({
+            field: mapping.source_field,
+            usedByComponent: component.name,
+            usedByComponentId: component.id,
+            mappedToField: mapping.target_field
+          }))
+      );
+  }
+
+  /**
+   * Updates the field usage table showing where current component's fields are used
+   * @param {string} currentComponentId - Current component ID
+   * @param {Array} allComponents - Array of all components
+   */
+  updateFieldUsageTable(currentComponentId, allComponents = []) {
+    const usageTableBody = document.getElementById('field-usage-table-body');
+    const usageSection = document.getElementById('field-usage-table-section');
+    
+    if (!usageTableBody) return;
+
+    const fieldUsages = this.findFieldUsageInOtherComponents(currentComponentId, allComponents);
+
+    if (!fieldUsages || fieldUsages.length === 0) {
+      usageTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-base-content opacity-60 italic">No field usage found</td></tr>';
+      if (usageSection) usageSection.classList.add('hidden');
+      return;
+    }
+
+    if (usageSection) usageSection.classList.remove('hidden');
+
+    usageTableBody.innerHTML = fieldUsages.map(usage => `
+      <tr>
+        <td class="font-mono text-sm">${this.escapeHtml(usage.field)}</td>
+        <td><span class="badge badge-outline badge-sm">${this.escapeHtml(usage.usedByComponent)}</span></td>
+        <td class="font-mono text-sm">${this.escapeHtml(usage.mappedToField)}</td>
+      </tr>
+    `).join('');
+  }
+
+  /**
    * Escapes HTML to prevent XSS
    * @param {string} unsafe - Unsafe string
    * @returns {string} Escaped string
@@ -508,5 +568,5 @@ class Mappings {
 // Register module
 (function() {
   'use strict';
-  window.moduleRegistry.register('Mappings', Mappings, ['DependencyUtils', 'DropdownUtils']);
+  window.moduleRegistry.register('Mappings', Mappings, ['ComponentModel', 'DropdownUtils']);
 })();
