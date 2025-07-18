@@ -442,20 +442,20 @@ class Component {
             // If no source_component_id, validate field exists in current component
             if (!existingMapping.source_component_id) {
               mappingResolution = this.verifyFieldPresence(currentFields, existingMapping.source_field);
+              if (!mappingResolution.message) mappingResolution.message = `Invalid mapping: ${existingMapping.source_field} not found in the input of component ${component.name}`;
             } else {
               // Cross-component mapping validation
               const sourceComponent = allComponents.find(comp => comp.id === existingMapping.source_component_id);
               
               if (!sourceComponent) {
-                mappingResolution = {found: false, message: "Source component not found"};
+                mappingResolution = {found: false, message: "Invalid existing mapping: source component not found"};
               } else {
                 // Check if source field exists in source component
-                const sourceInputFields = this.getSchema(sourceComponent.input || {});
+                // const sourceInputFields = this.getSchema(sourceComponent.input || {});
                 const sourceOutputFields = this.getSchema(sourceComponent.output || {});
-                const allSourceFields = [...sourceInputFields, ...sourceOutputFields];
-                
-                mappingResolution = this.verifyFieldPresence(allSourceFields, existingMapping.source_field);
-                if (!mappingResolution.message) mappingResolution["message"] = `Wrong mapping: ${existingMapping.source_field} not found in source component ${sourceComponent.name}`;
+
+                mappingResolution = this.verifyFieldPresence(sourceOutputFields, existingMapping.source_field);
+                if (!mappingResolution.message) mappingResolution.message = `Invalid mapping: ${existingMapping.source_field} not found in source component ${sourceComponent.name}`;
               }
             }
           }
