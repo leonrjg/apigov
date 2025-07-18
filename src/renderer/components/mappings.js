@@ -267,35 +267,29 @@ class Mappings {
    * @param targetComponentName
    */
   async handleAddMapping(selectorId, componentId, targetField, targetComponentName) {
-    console.log("0");
     const selector = document.getElementById(selectorId);
     if (!selector) {
-      console.log("1");
       return;
     }
     
     try {
       const selectedDisplay = selector._selectedValue;
       if (!selectedDisplay) {
-                console.log("2");
                 return;
       }
-      console.log("2.5");
+
       const selectedFieldObj = selector._fieldMapping[selectedDisplay];
       if (!selectedFieldObj) {
-        console.log("3");
                 return;
       }
-      console.log("3.5");
+
       // Get current component to add mapping to - fetch fresh data from database
       const components = await window.api.getComponents();
       const currentComponent = components.find(c => c.id === componentId);
       if (!currentComponent) {
-        console.log("4");
                 return;
       }
       
-      console.log("4.5");
       // Create mapping using mapping service
       const mapping = this.mappingService.createFieldMapping(
         targetField,
@@ -305,29 +299,26 @@ class Mappings {
         componentId,
         currentComponent.name
       );
-      console.log("4.75");
-            if (!mapping) {
-              console.log("5");
-                return;
+
+      if (!mapping) {
+        return;
       }
-      console.log("6");
+
       // Add mapping to component
       const updatedMappings = this.mappingService.addMapping(
         currentComponent.mappings || [],
         mapping
       );
 
-      console.log("7");
       // Update component in database
       const updatedComponent = { ...currentComponent, mappings: updatedMappings };
-      console.log("8");
       try {
         await window.api.updateComponent(updatedComponent);
       } catch (dbError) {
         console.error('[MissingMappings] Database update failed:', dbError);
         throw dbError;
       }
-      console.log("9");
+
       // Notify about mapping addition
       if (this.onMappingAdded) {
         this.onMappingAdded(mapping, updatedComponent);

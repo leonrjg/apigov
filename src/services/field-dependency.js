@@ -148,7 +148,7 @@ class FieldDependency {
               componentName: component.name,
               componentId: component.id,
               missingField: missingFieldObject.path,
-              fromComponent: fromComponent.name,
+              fromComponent: fromComponent ? fromComponent.name : undefined,
               fromComponentId: fromComponent ? fromComponent.id : null,
               message: missingFieldObject.message
             });
