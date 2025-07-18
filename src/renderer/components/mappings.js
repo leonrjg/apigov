@@ -89,41 +89,43 @@ class Mappings {
                     <span class="badge badge-warning badge-sm" data-count="${mappings.length}">${mappings.length}</span>
                   </div>
                 </div>
-                <div class="collapse-content">
-                  <div class="space-y-2 pt-2 mb-15">
+                <div class="collapse-content overflow-auto">
+                  <div class="space-y-2 pt-2 mb-10">
                     ${mappings.map(mapping => `
-                      <div class="bg-base-100 p-3 rounded border border-base-300" data-mapping-item="${mapping.componentId}-${mapping.missingField.replace(/\./g, '-')}">
-                        <div class="space-y-3">
-                          <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                              <div class="text-sm">
-                                <span class="font-medium">Missing field:</span> 
-                                <code class="bg-error/10 text-error px-1 rounded text-xs">${mapping.missingField}</code>
+                          <div class="bg-base-100 p-3 rounded border border-base-300" data-mapping-item="${mapping.componentId}-${mapping.missingField.replace(/\./g, '-')}">
+                            <div class="space-y-3">
+                              <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                  <div class="text-md">
+                                    <span class="font-medium">Missing field:</span> 
+                                    <code class="bg-error/10 text-error px-1 rounded text-xs">${mapping.missingField}</code>
+                                  </div>
+                                  <div class="text-sm text-base-content/70 mt-1">
+                                    Required by: <span class="font-medium">${mapping.fromComponent}</span>
+                                  </div>
+                                </div>
                               </div>
-                              <div class="text-xs text-base-content/70 mt-1">
-                                Required by: <span class="font-medium">${mapping.fromComponent}</span>
+                              
+                              <div class="border-t pt-3">
+                              ${mapping.message ? mapping.message : `
+                                <div class="text-xs font-medium text-base-content/70 mb-2">Add mapping:</div>
+                                <div class="flex gap-2 items-end">
+                                  <div class="flex-1">
+                                    <select 
+                                      id="field-selector-${mapping.componentId}-${mapping.missingField.replace(/\./g, '-')}" 
+                                      class="select select-xs select-bordered w-full" 
+                                      data-component-id="${mapping.componentId}" 
+                                      data-target-field="${mapping.missingField}" 
+                                      data-target-component="${mapping.fromComponent}"
+                                    >
+                                      <option value="">Select field...</option>
+                                    </select>
+                                  </div>
+                                </div>
+                              `}
                               </div>
                             </div>
                           </div>
-                          
-                          <div class="border-t pt-3">
-                            <div class="text-xs font-medium text-base-content/70 mb-2">Add mapping:</div>
-                            <div class="flex gap-2 items-end">
-                              <div class="flex-1">
-                                <select 
-                                  id="field-selector-${mapping.componentId}-${mapping.missingField.replace(/\./g, '-')}" 
-                                  class="select select-xs select-bordered w-full" 
-                                  data-component-id="${mapping.componentId}" 
-                                  data-target-field="${mapping.missingField}" 
-                                  data-target-component="${mapping.fromComponent}"
-                                >
-                                  <option value="">Select field...</option>
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     `).join('')}
                   </div>
                 </div>

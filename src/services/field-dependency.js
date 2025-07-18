@@ -140,22 +140,18 @@ class FieldDependency {
       }
 
       const dependencyCheck = await this.Component.checkComponentDependencies(component.id);
-      
       if (dependencyCheck.hasMissingDependencies) {
-        dependencyCheck.missingFields.forEach(missingFieldStr => {
-          const match = missingFieldStr.match(/^(.+) \(from (.+)\)$/);
-          if (match) {
-            const [, fieldName, fromComponentName] = match;
-            const fromComponent = components.find(comp => comp.name === fromComponentName);
+        dependencyCheck.missingFields.forEach(missingFieldObject => {
+            const fromComponent = components.find(comp => comp.id === missingFieldObject.from);
             
             missingMappings.push({
               componentName: component.name,
               componentId: component.id,
-              missingField: fieldName,
-              fromComponent: fromComponentName,
-              fromComponentId: fromComponent ? fromComponent.id : null
+              missingField: missingFieldObject.path,
+              fromComponent: fromComponent.name,
+              fromComponentId: fromComponent ? fromComponent.id : null,
+              message: missingFieldObject.message
             });
-          }
         });
       }
     }

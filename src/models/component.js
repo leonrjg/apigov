@@ -320,7 +320,7 @@ class Component {
     const formatValue = (value) => {
       if (Array.isArray(value)) return `[${value.length} items]`;
       if (typeof value === 'string' && value.length > 50) return value.substring(0, 50) + '...';
-      if (value === null) return 'null';
+      //if (value === null) return 'null';
       return value;
     };
 
@@ -372,8 +372,8 @@ class Component {
       const consumedComponent = allComponents.find(comp => comp.id === consumedComponentId);
       if (!consumedComponent || !consumedComponent.input) continue;
 
-      const consumedFields = this.getFieldPaths(consumedComponent.input);
-      if (consumedFields.includes(field)) {
+      const consumedFields = this.getSchema(consumedComponent.input);
+      if (this.verifyFieldPresence(consumedFields, field).found) {
         return true;
       }
     }
@@ -382,6 +382,23 @@ class Component {
 
   static async check (componentId, allComponents = null) {
     return (await this.checkComponentDependencies(componentId));
+  }
+
+  static verifyFieldPresence = (fieldMapArray, fieldPath) => {
+    let found = false;
+    let message = null;
+    const results = fieldMapArray.filter(fieldMap => fieldMap.path === fieldPath);
+    if (results.length > 0) {
+      const value = results[0].value;
+      if (value === null || value === undefined) {
+        found = false;
+        message = `Field is present but empty`;
+      } else {
+        found = true;
+        message = null;
+      }
+    }
+    return {"found": found, "message": message}
   }
 
 // Check field dependencies for a component
@@ -402,49 +419,49 @@ class Component {
       return {hasMissingDependencies: false, missingFields: []};
     }
 
-    const currentFields = this.getFieldPaths(component.input || {});
     const missingFields = [];
+    const currentFields = this.getSchema(component.input || {});
 
     component.consumes.forEach(consumedComponentId => {
       const consumedComponent = allComponents.find(comp => comp.id === consumedComponentId);
       if (!consumedComponent || !consumedComponent.input || consumedComponent.type !== 'endpoint') return;
 
-      const consumedFields = this.getFieldPaths(consumedComponent.input);
+      const consumedFields = this.getSchema(consumedComponent.input);
+      
+      consumedFields.forEach(fieldObject => {
+        let fieldInInput = this.verifyFieldPresence(currentFields, fieldObject.path);
+        
+        if (!fieldInInput.found) {
+          let mappingResolution = fieldInInput;
 
-      consumedFields.forEach(field => {
-        if (!currentFields.includes(field) && !this.isFieldAvailableInConsumedComponents(field, consumedComponentId, component.consumes, allComponents)) {
-          // Check if this field is resolved via mapping with integrity validation
-          const isResolvedByMapping = component.mappings &&
-              Array.isArray(component.mappings) &&
-              component.mappings.some(mapping => {
-                // Basic mapping structure validation
-                if (mapping.target_component_id !== consumedComponent.id ||
-                    mapping.target_field !== field) {
-                  return false;
-                }
+          const existingMapping = component.mappings.find(mapping =>
+              mapping.target_component_id === consumedComponent.id && mapping.target_field === fieldObject.path
+          );
 
-                // If no source_component_id, validate field exists in current component
-                if (!mapping.source_component_id) {
-                  return currentFields.includes(mapping.source_field);
-                }
-
-                // Cross-component mapping validation
-                const sourceComponent = allComponents.find(comp => comp.id === mapping.source_component_id);
-                if (!sourceComponent) {
-                  return false; // Source component doesn't exist
-                }
-
+          if (existingMapping) {
+            // If no source_component_id, validate field exists in current component
+            if (!existingMapping.source_component_id) {
+              mappingResolution = this.verifyFieldPresence(currentFields, existingMapping.source_field);
+            } else {
+              // Cross-component mapping validation
+              const sourceComponent = allComponents.find(comp => comp.id === existingMapping.source_component_id);
+              
+              if (!sourceComponent) {
+                mappingResolution = {found: false, message: "Source component not found"};
+              } else {
                 // Check if source field exists in source component
-                // For cross-component mappings, check both input and output fields
-                const sourceInputFields = this.getFieldPaths(sourceComponent.input || {});
-                const sourceOutputFields = this.getFieldPaths(sourceComponent.output || {});
+                const sourceInputFields = this.getSchema(sourceComponent.input || {});
+                const sourceOutputFields = this.getSchema(sourceComponent.output || {});
                 const allSourceFields = [...sourceInputFields, ...sourceOutputFields];
+                
+                mappingResolution = this.verifyFieldPresence(allSourceFields, existingMapping.source_field);
+                if (!mappingResolution.message) mappingResolution["message"] = `Wrong mapping: ${existingMapping.source_field} not found in source component ${sourceComponent.name}`;
+              }
+            }
+          }
 
-                return allSourceFields.includes(mapping.source_field);
-              });
-
-          if (!isResolvedByMapping) {
-            missingFields.push(`${field} (from ${consumedComponent.name})`);
+          if (!mappingResolution.found) {
+            missingFields.push({...fieldObject, "from": consumedComponent.id, "message": mappingResolution.message});
           }
         }
       });
