@@ -2,7 +2,7 @@
     <img src="src/assets/logo.png" alt="APIGov Logo"/>
 </p>
 
-## <img style="width:30px" src="src/assets/icon.png"> APIGov <small>(alpha)</small>
+## <img style="width:35px;vertical-align:sub" src="src/assets/icon.png"> APIGov <small>(alpha)</small>
 #### Manage API dependencies and schema governance
 
 This app tracks dependencies between microservices at field-level, allowing detection of breaking changes and easing initial mapping.
