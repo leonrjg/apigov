@@ -3,7 +3,7 @@
 
   class DataController {
     constructor() {
-      this.Component = window.requireModule('Component');
+      this.Component = window.requireModule('ComponentModel');
     }
 
     async getComponents() {
