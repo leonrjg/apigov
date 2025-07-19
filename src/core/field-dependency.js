@@ -8,7 +8,7 @@ class FieldDependency {
    * @param {Object} component - Component to validate
    * @param {Array} allComponents - All available components
    * @param {Array} currentFields - Current component's fields
-   * @returns {Object} Validation result with missing fields
+   * @returns {Promise<Component>} Validation result with missing fields
    */
   async validateFieldDependencies(component, allComponents, currentFields) {
     if (!component.consumes || component.consumes.length === 0) {
@@ -129,7 +129,7 @@ class FieldDependency {
   /**
    * Gets all missing mappings across all components
    * @param {Array} components - All components
-   * @returns {Array} Array of missing mapping objects
+   * @returns {Promise<Array>} Array of missing mapping objects
    */
   async getAllMissingMappings(components) {
     const missingMappings = [];

@@ -7,7 +7,7 @@ document.addEventListener('htmx:afterSettle', async (event) => {
       'DependencyValidationService',
       'MappingService', 
       'Mappings',
-      'TagUtils',
+      'Tag',
       'ComponentDataManager',
       'FieldOperations',
       'DropdownUtils'
@@ -17,7 +17,7 @@ document.addEventListener('htmx:afterSettle', async (event) => {
       FieldDependency,
       MappingService,
       Mappings,
-      TagUtils,
+      Tag,
       ComponentDataManager,
       FieldOperations,
       DropdownUtils
@@ -233,7 +233,7 @@ document.addEventListener('htmx:afterSettle', async (event) => {
         component.id = endpointId.value;
         await window.api.updateComponent(component);
       } else {
-        component['color'] = TagUtils.getRandomColor();
+        component['color'] = Tag.getRandomColor();
         await window.api.addComponent(component);
       }
       endpointForm.reset();

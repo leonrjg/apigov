@@ -35,7 +35,7 @@ const renderTagsAsHtml = (tags, colorMapping = {}) => {
 };
 
 // Export functions for use in other files
-const TagUtils = {
+const Tag = {
   renderTagsAsHtml,
   getRandomColor,
   getBadgeClassForColor
@@ -43,10 +43,10 @@ const TagUtils = {
 
 // For browser environment
 if (typeof window !== 'undefined' && window.moduleRegistry) {
-  window.moduleRegistry.register('TagUtils', TagUtils);
+  window.moduleRegistry.register('Tag', Tag);
 }
 
 // For Node.js/Jest environment
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = TagUtils;
+  module.exports = Tag;
 }

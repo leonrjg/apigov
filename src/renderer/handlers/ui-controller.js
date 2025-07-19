@@ -3,7 +3,7 @@
 
   // Get dependencies
   const Component = window.requireModule('ComponentModel');
-  const TagUtils = window.requireModule('TagUtils');
+  const Tag = window.requireModule('Tag');
 
   class UIController {
     constructor(dataController, graphController) {
@@ -158,7 +158,7 @@
             colorMapping[consumedComp.name] = consumedComp.color;
           }
         });
-        return TagUtils.renderTagsAsHtml(tagNames, colorMapping);
+        return Tag.renderTagsAsHtml(tagNames, colorMapping);
       })();
 
       tr.innerHTML = `
@@ -303,7 +303,7 @@
     }
   };
 
-  window.moduleRegistry.register('UIController', UIController, ['DataController', 'GraphController', 'ComponentModel', 'TagUtils']);
+  window.moduleRegistry.register('UIController', UIController, ['DataController', 'GraphController', 'ComponentModel', 'Tag']);
   window.moduleRegistry.register('renderComponents', renderComponents);
   window.moduleRegistry.register('renderGraphView', renderGraphView);
 })();

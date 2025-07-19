@@ -9,6 +9,8 @@ class Mappings {
     // Get dependencies from module system
     this.Component = window.requireModule('ComponentModel');
     this.DropdownUtils = window.requireModule('DropdownUtils');
+    this.DataController = window.requireModule('DataController');
+    this.AppController = window.requireModule('AppController');
   }
 
   /**
@@ -64,7 +66,7 @@ class Mappings {
       `;
     }
 
-    const groupedByComponent = this.groupMappingsByComponent(missingMappings);
+    const groupedByComponent = this.DataController.groupMappingsByComponent(missingMappings);
     
     return `
       <div class="card bg-base-100 shadow-sm border border-warning/20">
@@ -138,22 +140,6 @@ class Mappings {
   }
 
   /**
-   * Groups missing mappings by component
-   * @param {Array} missingMappings - Missing mappings array
-   * @returns {Object} Grouped mappings
-   */
-  groupMappingsByComponent(missingMappings) {
-    return missingMappings.reduce((groups, mapping) => {
-      const component = mapping.componentName;
-      if (!groups[component]) {
-        groups[component] = [];
-      }
-      groups[component].push(mapping);
-      return groups;
-    }, {});
-  }
-
-  /**
    * Sets up event handlers for the mapping interface
    */
   setupEventHandlers() {
@@ -165,7 +151,7 @@ class Mappings {
     // Setup field selectors with autocomplete
     const selectors = container.querySelectorAll('[id^="field-selector-"]');
     selectors.forEach(selector => {
-      this.setupFieldSelector(selector);
+      void this.setupFieldSelector(selector);
     });
   }
 
@@ -173,13 +159,13 @@ class Mappings {
    * Sets up autocomplete for a field selector
    * @param {HTMLElement} selector - The select element
    */
-  setupFieldSelector(selector) {
+  async setupFieldSelector(selector) {
     const componentId = selector.dataset.componentId;
     const targetField = selector.dataset.targetField;
     const targetComponentName = selector.dataset.targetComponent;
-    
-    const availableFields = this.getAvailableFieldsForMapping(componentId, targetComponentName);
-    
+
+    const availableFields = await this.DataController.getAvailableFieldsForMapping(componentId, targetComponentName);
+
     const dropdown = this.DropdownUtils.createDropdown(selector, {
       maxItemCount: -1, // Allow unlimited items for search, but we'll handle single selection
       onSelect: async (selectedValue) => {
@@ -188,75 +174,17 @@ class Mappings {
         await this.handleAddMapping(selector.id, componentId, targetField, targetComponentName);
       }
     });
-    
+
     // Convert field objects to simple strings for the dropdown
     const fieldDisplayStrings = availableFields.map(field => field.display);
     dropdown.updateItems(fieldDisplayStrings, []); // No pre-selected items
-    
+
     // Store dropdown reference and field mapping for later use
     selector._dropdownInstance = dropdown;
     selector._fieldMapping = availableFields.reduce((map, field) => {
       map[field.display] = field;
       return map;
     }, {});
-  }
-
-  /**
-   * Gets available fields for mapping
-   * @param {string} componentId - Target component ID
-   * @param {string} targetComponentName - Target component name
-   * @returns {Array} Available field objects
-   */
-  getAvailableFieldsForMapping(componentId, targetComponentName) {
-    const availableFields = [];
-    
-    // Get current component
-    const currentComponent = this.allComponents.find(c => c.id === componentId);
-    if (!currentComponent) {
-      return availableFields;
-    }
-    
-    // Add fields from current component's input and output
-    const currentInputFields = this.Component.getFieldPaths(currentComponent.input || {});
-    const currentOutputFields = this.Component.getFieldPaths(currentComponent.output || {});
-    
-    currentInputFields.forEach(fieldPath => {
-      availableFields.push({
-        field: fieldPath,
-        source: currentComponent.name,
-        sourceId: currentComponent.id,
-        display: `${fieldPath} (from ${currentComponent.name})`
-      });
-    });
-    
-    currentOutputFields.forEach(fieldPath => {
-      availableFields.push({
-        field: fieldPath,
-        source: currentComponent.name,
-        sourceId: currentComponent.id,
-        display: `${fieldPath} (from ${currentComponent.name})`
-      });
-    });
-    
-    // Add fields from consumed components (their outputs)
-    if (currentComponent.consumes) {
-      currentComponent.consumes.forEach(consumedId => {
-        const consumedComponent = this.allComponents.find(c => c.id === consumedId);
-        if (consumedComponent && consumedComponent.name !== targetComponentName) {
-          const outputFields = this.Component.getFieldPaths(consumedComponent.output || {});
-          outputFields.forEach(fieldPath => {
-            availableFields.push({
-              field: fieldPath,
-              source: consumedComponent.name,
-              sourceId: consumedComponent.id,
-              display: `${fieldPath} (from ${consumedComponent.name})`
-            });
-          });
-        }
-      });
-    }
-    
-    return availableFields;
   }
 
   /**
@@ -312,12 +240,7 @@ class Mappings {
 
       // Update component in database
       const updatedComponent = { ...currentComponent, mappings: updatedMappings };
-      try {
-        await window.api.updateComponent(updatedComponent);
-      } catch (dbError) {
-        console.error('[MissingMappings] Database update failed:', dbError);
-        throw dbError;
-      }
+      await window.api.updateComponent(updatedComponent);
 
       // Notify about mapping addition
       if (this.onMappingAdded) {
@@ -369,7 +292,8 @@ class Mappings {
    */
   refresh() {
     if (this.containerId) {
-      this.render(this.containerId);
+      void this.render(this.containerId);
+      void this.AppController.renderComponents();
     }
   }
 
@@ -479,38 +403,6 @@ class Mappings {
   }
 
   /**
-   * Finds all occurrences of current component's fields being used in other components' mappings
-   * @param {string} currentComponentId - ID of the current component
-   * @param {Array} allComponents - Array of all components
-   * @returns {Array} Array of field usage objects
-   */
-  findFieldUsageInOtherComponents(currentComponentId, allComponents) {
-    const currentComponent = allComponents.find(c => c.id === currentComponentId);
-    if (!currentComponent) return [];
-
-    const currentFields = [
-      ...this.Component.getFieldPaths(currentComponent.input || {}),
-      ...this.Component.getFieldPaths(currentComponent.output || {})
-    ];
-
-    return allComponents
-      .filter(component => component.id !== currentComponentId)
-      .flatMap(component => 
-        (component.mappings || [])
-          .filter(mapping => 
-            mapping.source_component_id === currentComponentId &&
-            currentFields.includes(mapping.source_field)
-          )
-          .map(mapping => ({
-            field: mapping.source_field,
-            usedByComponent: component.name,
-            usedByComponentId: component.id,
-            mappedToField: mapping.target_field
-          }))
-      );
-  }
-
-  /**
    * Updates the field usage table showing where current component's fields are used
    * @param {string} currentComponentId - Current component ID
    * @param {Array} allComponents - Array of all components
@@ -521,7 +413,7 @@ class Mappings {
     
     if (!usageTableBody) return;
 
-    const fieldUsages = this.findFieldUsageInOtherComponents(currentComponentId, allComponents);
+    const fieldUsages = this.DataController.findFieldUsageInOtherComponents(currentComponentId, allComponents);
 
     if (!fieldUsages || fieldUsages.length === 0) {
       usageTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-base-content opacity-60 italic">No field usage found</td></tr>';
@@ -561,5 +453,5 @@ class Mappings {
 // Register module
 (function() {
   'use strict';
-  window.moduleRegistry.register('Mappings', Mappings, ['ComponentModel', 'DropdownUtils']);
+  window.moduleRegistry.register('Mappings', Mappings, ['ComponentModel', 'DropdownUtils', 'DataController', 'AppController']);
 })();
