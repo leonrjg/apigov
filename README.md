@@ -2,7 +2,7 @@
     <img src="src/assets/logo.png" style="width:500px" alt="APIGov Logo"/>
 </p>
 
-## <img style="width:35px;vertical-align:sub" src="src/assets/icon.png"> APIGov <small>(alpha)</small>
+## <img style="width:35px;vertical-align:sub" src="src/assets/icon.png"> APIGov <small><i>(alpha)</i></small>
 #### Manage API dependencies and schema governance
 
 This app tracks dependencies between microservices at field-level, allowing detection of breaking changes and easing initial mapping.
@@ -32,6 +32,9 @@ This app tracks dependencies between microservices at field-level, allowing dete
 
 <img width="2088" height="1392" alt="image" src="https://github.com/user-attachments/assets/028d209c-b187-4885-8c8a-4993be9acaa0" />
 
+## Installation
+- Preferably, use the latest [release](https://github.com/leonrjg/apigov/releases/latest).
+- Alternatively, clone the repository and run `npm install` followed by `npm run start`.
 
 ## Stack
 - **Framework**: Electron 35.0.0
