@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html data-theme="cupcake">
+  <head>
+    <meta charset="UTF-8">
+    <title>APIGov</title>
+    <script src="../../assets/vendor/tailwindcss-4.1.11.min.js"></script>
+    <link href="../../assets/vendor/daisyui-5.0.43.min.css" rel="stylesheet" type="text/css" />
+    <link href="../../assets/vendor/jsoneditor-10.2.0.min.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" href="../../assets/vendor/choices-11.1.0.min.css">
+    <link href="../../assets/style.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body class="bg-base-100 min-h-screen">
+    <div class="flex h-screen w-full">
+      <!-- Sidebar -->
+      <div id="sidebar-container"></div>
+
+      <!-- Main Content -->
+      <div class="flex-1 overflow-auto bg-base-100 h-full" id="main-content" hx-get="components.html" hx-trigger="load">
+        <!-- Content will be loaded here via HTMX -->
+      </div>
+    </div>
+    
+    <!-- Module System -->
+    <script src="../../core/module-registry.js"></script>
+
+    <!-- Vendor libraries -->
+    <script src="../../assets/vendor/htmx-2.0.6.min.js"></script>
+    <script src="../../assets/vendor/d3-7.9.0.min.js"></script>
+    <script src="../../assets/vendor/choices-11.1.0.min.js"></script>
+    <script src="../../assets/vendor/jsoneditor-10.2.0.min.js"></script>
+    
+    <!-- Models -->
+    <script src="../../models/component.js"></script>
+    
+    <!-- Utilities -->
+    <script src="../elements/dropdown.js"></script>
+    <script src="../elements/tag.js"></script>
+    <script src="../elements/editor.js"></script>
+    
+    <!-- Services -->
+    <script src="../../core/field-dependency.js"></script>
+    <script src="../../core/mapping.js"></script>
+    
+    <!-- Controllers -->
+    <script src="../handlers/data-controller.js"></script>
+    <script src="../handlers/graph-controller.js"></script>
+    <script src="../handlers/ui-controller.js"></script>
+    <script src="../handlers/app-controller.js"></script>
+    
+    <!-- Components -->
+    <script src="../elements/sidebar.js"></script>
+    <script src="../elements/mappings.js"></script>
+
+    <!-- Diagram Models -->
+    <script src="../pages/diagram/DiagramModel.js"></script>
+
+    <!-- Diagram Renderers -->
+    <script src="../pages/diagram/DiagramRenderer.js"></script>
+    <script src="../pages/diagram/viewers/ExcalidrawRenderer.js"></script>
+    <script src="../elements/diagram.js"></script>
+    
+    <!-- Form modules -->
+    <script src="../pages/form/component-data-manager.js"></script>
+    <script src="../pages/form/field-operations.js"></script>
+  </body>
+</html>

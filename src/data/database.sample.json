@@ -1,0 +1,62 @@
+{
+  "components": [
+    {
+      "name": "CreateExchangeIntent",
+      "input": {},
+      "output": {
+        "test": 1
+      },
+      "consumes": [
+        "612e002d-e11d-4252-a140-decb4efb6a4f",
+        "9f7e1b9c-fe78-4f7f-b76b-2a8f2c0f2169",
+        "14231e19-e790-4c6d-9d9e-6026e5a9fbb1"
+      ],
+      "type": "endpoint",
+      "mappings": [],
+      "id": "b20f10e6-a62e-4047-b2db-e0b944877767",
+      "color": "green"
+    },
+    {
+      "name": "CreateExchangePurchase",
+      "input": {
+        "test": "1"
+      },
+      "output": {
+        "insurance_purchase_key": "..."
+      },
+      "consumes": [],
+      "type": "endpoint",
+      "mappings": [],
+      "id": "612e002d-e11d-4252-a140-decb4efb6a4f",
+      "color": "red"
+    },
+    {
+      "name": "CreateExchangeQuote",
+      "input": {
+        "original_quote_id": "..."
+      },
+      "output": {
+        "quote_id": "..."
+      },
+      "consumes": [],
+      "type": "endpoint",
+      "mappings": [],
+      "id": "9f7e1b9c-fe78-4f7f-b76b-2a8f2c0f2169",
+      "color": "blue"
+    },
+    {
+      "name": "GetPurchase",
+      "input": {
+        "insurance_purchase_key": "..."
+      },
+      "output": {
+        "quote_id": "..."
+      },
+      "consumes": [],
+      "type": "endpoint",
+      "mappings": [],
+      "id": "14231e19-e790-4c6d-9d9e-6026e5a9fbb1",
+      "color": "orange"
+    }
+  ]
+}

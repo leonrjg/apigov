@@ -1,0 +1,38 @@
+<!-- Excalidraw styles -->
+<link rel="stylesheet" href="https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/prod/index.css"/>
+
+<script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@19.0.0",
+      "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
+      "react-dom": "https://esm.sh/react-dom@19.0.0",
+      "react-dom/client": "https://esm.sh/react-dom@19.0.0/client"
+    }
+  }
+</script>
+
+<!-- Load libraries as ES modules -->
+<script type="module">
+  import React from "https://esm.sh/react@19.0.0";
+  import * as ReactDOMClient from "https://esm.sh/react-dom@19.0.0/client";
+  import * as ExcalidrawLib from "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.js?external=react,react-dom";
+  
+  // Make libraries globally available for the existing code
+  window.React = React;
+  window.ReactDOM = ReactDOMClient;
+  window.ExcalidrawLib = ExcalidrawLib;
+  
+  // Initialize diagram after libraries are loaded
+  const Diagram = window.requireModule('Diagram');
+  const Sidebar = window.requireModule('Sidebar');
+
+  const diagram = new Diagram(new ExcalidrawRenderer());
+  diagram.render('diagram-view-content');
+
+  const diagramContent = document.getElementById('diagram-view-content');
+  Sidebar.processDynamicContent(diagramContent);
+</script>
+
+<div id="diagram-view-content" class="bg-base-100 p-8 w-full h-full">
+</div>
