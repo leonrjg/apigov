@@ -4,7 +4,7 @@
   "description": "Microservice Schema Governance Tool",
   "keywords": [],
   "main": "./src/main.js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "leonrjg",
   "scripts": {
     "start": "electron-forge start",
